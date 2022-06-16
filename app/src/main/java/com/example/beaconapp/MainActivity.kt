@@ -1,28 +1,38 @@
 package com.example.beaconapp
 
 import android.Manifest
+import android.content.*
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import org.altbeacon.beacon.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.android.synthetic.main.activity_main.*
 
-// https://qiita.com/kenmaeda51415/items/ac5a2d5a15783bbe9192
+const val MSG_ACTIVITY_TO_SERVICE = 1
+const val MSG_SERVICE_TO_ACTIVITY = 2
+const val TAG: String = "MainActivityDebug"
 
-class MainActivity : AppCompatActivity(), RangeNotifier, MonitorNotifier {
-    private lateinit var mBeaconManager: BeaconManager
-    private val TAG: String = "BeaconDebug"
+class MainActivity : AppCompatActivity(), ServiceConnection {
 
-    var uuid = Identifier.parse(BeaconUtil.UUID)
+    private val PERMISSION_REQUEST_FINE_LOCATION = 1
+    private val PERMISSION_REQUEST_BACKGROUND_LOCATION = 2
 
-    private val mRegion = Region("unique-id-001", uuid, null, null)
+    private var upReceiver: UpdateReceiver? = null
+    private var intentFilter: IntentFilter? = null
+    var uuidText: TextView? = null
+    var distanceText: TextView? = null
 
-    override fun onCreate(savedInstanceState: Bundle?){
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        uuidText= findViewById(R.id.uuid);
+        distanceText = findViewById(R.id.distance)
 
         // デバイスのBLE対応チェック
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -36,55 +46,61 @@ class MainActivity : AppCompatActivity(), RangeNotifier, MonitorNotifier {
             checkPermission()
         }
 
-        // ビーコンマネージャーのインスタンス作成
-        mBeaconManager = BeaconManager.getInstanceForApplication(this)
-        // iBeaconの受信設定：iBeaconのフォーマットを登録する
-        mBeaconManager.beaconParsers.add(BeaconParser().setBeaconLayout(BeaconUtil.IBEACON_FORMAT))
-        mBeaconManager.addMonitorNotifier(this)
-        mBeaconManager.addRangeNotifier(this)
-        mBeaconManager.startMonitoring(mRegion)
-        mBeaconManager.startRangingBeacons(mRegion)
+        
+
+        // サービス起動
+        startService(Intent(this, BeaconService::class.java))
+
+        upReceiver = UpdateReceiver()
+        intentFilter = IntentFilter()
+        intentFilter!!.addAction("DO_ACTION")
+        registerReceiver(upReceiver, intentFilter)
+
+
+        val beacon1 = BeaconData("dummy1", "0")
+        val beacon2 = BeaconData("dummy2", "1")
+        val beacons = arrayOf(beacon1, beacon2)
+
+        // use a linear layout manager
+        recycler_view.layoutManager = LinearLayoutManager(this)
+
+        // set adapter
+        recycler_view.adapter = CustomAdapter(beacons)
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        recycler_view.setHasFixedSize(true)
     }
 
-    override fun onPause() {
-        super.onPause()
-        mBeaconManager.stopMonitoring(mRegion)
-        mBeaconManager.stopRangingBeacons(mRegion)
-        Log.d(TAG, "ビーコンサービス解除")
+    override fun onStop() {
+        super.onStop()
     }
 
-    override fun onResume() {
-        super.onResume()
-        mBeaconManager.addMonitorNotifier(this)
-        mBeaconManager.addRangeNotifier(this)
-        mBeaconManager.startMonitoring(mRegion)
-        mBeaconManager.startRangingBeacons(mRegion)
-        Log.d(TAG, "ビーコンサービス起動")
+    override fun onStart() {
+        super.onStart()
     }
 
-    override fun didEnterRegion(region: Region?) {
-        //領域への入場を検知
-        Log.d(TAG, "Enter Region ${region?.uniqueId}")
+    //サービスをバインドすると実行されるイベント
+    override fun onServiceConnected(componentName: ComponentName?, service: IBinder?) {
+        //サービスからMessengerのインスタンスが返されるのでメンバ変数として保存しておく
+//        mServiceMessenger = Messenger(service)
+//        bound = true
     }
 
-    override fun didExitRegion(region: Region?) {
-        //領域からの退場を検知
-        Log.d(TAG, "Exit Region ${region?.uniqueId}")
+    override fun onServiceDisconnected(name: ComponentName?) {
+//        mServiceMessenger = null
+//        bound = false
     }
 
-    override fun didRangeBeaconsInRegion(beacons: MutableCollection<Beacon>?, region: Region?) {
-        // 検知したBeaconの情報
-        Log.d(TAG, "beacons.size ${beacons?.size}")
-        beacons?.let {
-            for (beacon in beacons) {
-                Log.d(TAG, "UUID: ${beacon.id1}, major: ${beacon.id2}, minor: ${beacon.id3}, RSSI: ${beacon.rssi}, TxPower: ${beacon.txPower}, Distance: ${beacon.distance}")
-            }
+    // サービスから値を受け取ったら動かしたい内容を書く
+    private class UpdateReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            val extras = intent.getStringArrayListExtra("data")
+            BeaconData(extras?.get(0).toString(), extras?.get(5).toString())
+            Toast.makeText(context, extras?.get(5).toString(),  Toast.LENGTH_LONG).show()
+            Log.d(TAG, extras?.get(0).toString())
+            Log.d(TAG, extras?.get(5).toString())
         }
-    }
-
-    override fun didDetermineStateForRegion(state: Int, region: Region?) {
-        //領域への入退場のステータス変化を検知（INSIDE: 1, OUTSIDE: 0）
-        Log.d(TAG, "Determine State: $state")
     }
 
     // パーミッションの許可チェック
