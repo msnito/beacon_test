@@ -3,14 +3,14 @@ package com.example.beaconapp
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Bundle
-import android.os.IBinder
+import android.os.*
+import android.os.VibrationEffect.DEFAULT_AMPLITUDE
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
     var distanceText: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         uuidText= findViewById(R.id.uuid);
@@ -46,8 +47,6 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
             checkPermission()
         }
 
-        
-
         // サービス起動
         startService(Intent(this, BeaconService::class.java))
 
@@ -55,7 +54,6 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         intentFilter = IntentFilter()
         intentFilter!!.addAction("DO_ACTION")
         registerReceiver(upReceiver, intentFilter)
-
 
         val beacon1 = BeaconData("dummy1", "0")
         val beacon2 = BeaconData("dummy2", "1")
@@ -90,17 +88,6 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
     override fun onServiceDisconnected(name: ComponentName?) {
 //        mServiceMessenger = null
 //        bound = false
-    }
-
-    // サービスから値を受け取ったら動かしたい内容を書く
-    private class UpdateReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent) {
-            val extras = intent.getStringArrayListExtra("data")
-            BeaconData(extras?.get(0).toString(), extras?.get(5).toString())
-            Toast.makeText(context, extras?.get(5).toString(),  Toast.LENGTH_LONG).show()
-            Log.d(TAG, extras?.get(0).toString())
-            Log.d(TAG, extras?.get(5).toString())
-        }
     }
 
     // パーミッションの許可チェック
