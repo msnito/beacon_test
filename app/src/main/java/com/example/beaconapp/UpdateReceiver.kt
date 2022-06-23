@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import com.example.beaconapp.activity.TAG
+import com.example.beaconapp.adapter.BeaconData
+import com.example.beaconapp.util.BeaconUtil
 
 // サービスから値を受け取ったら動かしたい内容を書く
 class UpdateReceiver : BroadcastReceiver() {
@@ -14,23 +17,20 @@ class UpdateReceiver : BroadcastReceiver() {
 
         val beaconDistance = extras?.get(5).toString()
 
-        BeaconData(extras?.get(0).toString(), beaconDistance)
-
-        val bc = BeaconCalcurator()
-
-        val newDistance = bc.calDistance(extras?.get(4)!!.toInt(), extras?.get(3)!!.toInt())
+        BeaconData(
+            extras?.get(0).toString(),
+            beaconDistance
+        )
 
         val vc = VibrationController(context)
-//        vc.start()
 
-        if (beaconDistance.toDouble() > 3) {
+        // 特定の距離離れたら端末を振動させる
+        if (beaconDistance.toDouble() > BeaconUtil.DISTANCE_FOR_NOTICE) {
             vc.start()
             Log.d(TAG, "distance was over 5m.")
         }
 
         Toast.makeText(context, beaconDistance,  Toast.LENGTH_LONG).show()
-        Log.d(TAG, extras?.get(0).toString())
-        Log.d("newdistance", newDistance.toString())
         Log.d(TAG, extras?.get(0).toString())
         Log.d(TAG, beaconDistance)
     }

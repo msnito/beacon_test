@@ -1,12 +1,11 @@
-package com.example.beaconapp
+package com.example.beaconapp.adapter
 
 import android.view.LayoutInflater
-import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.recyclerview_item.view.*
+import com.example.beaconapp.R
 
 data class BeaconData(
     val uuid: String,

@@ -1,9 +1,12 @@
-package com.example.beaconapp
+package com.example.beaconapp.service
 
 import android.app.Service
 import android.content.Intent
 import android.os.*
 import android.util.Log
+import com.example.beaconapp.activity.MSG_ACTIVITY_TO_SERVICE
+import com.example.beaconapp.activity.MSG_SERVICE_TO_ACTIVITY
+import com.example.beaconapp.util.BeaconUtil
 import org.altbeacon.beacon.*
 import java.lang.ref.WeakReference
 
@@ -26,7 +29,8 @@ class BeaconService : Service(), RangeNotifier, MonitorNotifier{
             when (msg.what) {
                 MSG_ACTIVITY_TO_SERVICE ->{
                     try {
-                        val msg2 = Message.obtain(null, MSG_SERVICE_TO_ACTIVITY, 0, 0)
+                        val msg2 = Message.obtain(null,
+                            MSG_SERVICE_TO_ACTIVITY, 0, 0)
                         msg.replyTo.send(msg2)
                     } catch (e: RemoteException) {
                         e.printStackTrace()
@@ -38,7 +42,11 @@ class BeaconService : Service(), RangeNotifier, MonitorNotifier{
     }
 
     override fun onBind(intent: Intent): IBinder {
-        mServiceMessenger = Messenger(ServiceHandler(this))
+        mServiceMessenger = Messenger(
+            ServiceHandler(
+                this
+            )
+        )
         return mServiceMessenger!!.binder
     }
 
@@ -92,6 +100,9 @@ class BeaconService : Service(), RangeNotifier, MonitorNotifier{
         Log.d(TAG, "Determine State: $state")
     }
 
+    /**
+     * beaconデータを送信する
+     */
     private fun sendBeaconData(
         uuid: String,
         major: String,
