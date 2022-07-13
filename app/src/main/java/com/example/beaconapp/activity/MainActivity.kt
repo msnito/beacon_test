@@ -9,11 +9,13 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ToggleButton
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.beaconapp.*
+import com.example.beaconapp.R
+import com.example.beaconapp.UpdateReceiver
 import com.example.beaconapp.adapter.BeaconData
 import com.example.beaconapp.adapter.CustomAdapter
 import com.example.beaconapp.service.BeaconService
@@ -34,6 +36,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
     var uuidText: TextView? = null
     var distanceText: TextView? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -53,6 +56,82 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
             checkPermission()
         }
 
+        checkLocationPermission()
+
+        val toggle: ToggleButton = findViewById(R.id.toggle_button)
+        val dataStore = getSharedPreferences("DataStore", Context.MODE_PRIVATE)
+        val editor: SharedPreferences.Editor = dataStore.edit()
+
+        toggle.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                // Key: input, value: text
+                editor.putString("vibration", "on")
+                editor.apply()
+            } else {
+                // Key: input, value: text
+                editor.putString("vibration", "off")
+                editor.apply()
+            }
+        }
+
+
+        val beacon1 = BeaconData("dummy1", "0")
+        val beacon2 = BeaconData("dummy2", "1")
+        val beacons = arrayOf(beacon1, beacon2)
+
+        // use a linear layout manager
+//        recycler_view.layoutManager = LinearLayoutManager(this)
+
+        // set adapter
+//        recycler_view.adapter = CustomAdapter(beacons)
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+//        recycler_view.setHasFixedSize(true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        intent = Intent(this, BeaconService::class.java)
+        startService(intent)
+
+        upReceiver = UpdateReceiver()
+        intentFilter = IntentFilter()
+        intentFilter!!.addAction("DO_ACTION")
+        registerReceiver(upReceiver, intentFilter)
+    }
+
+    //サービスをバインドすると実行されるイベント
+    override fun onServiceConnected(componentName: ComponentName?, service: IBinder?) {
+        //サービスからMessengerのインスタンスが返されるのでメンバ変数として保存しておく
+//        mServiceMessenger = Messenger(service)
+//        bound = true
+    }
+
+    override fun onServiceDisconnected(name: ComponentName?) {
+//        mServiceMessenger = null
+//        bound = false
+    }
+
+    // パーミッションの許可チェック
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun checkPermission() {
+        // パーミッション未許可の時
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // パーミッションの許可ダイアログの表示
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 0)
+        }
+    }
+
+    private fun checkLocationPermission(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
@@ -99,58 +178,6 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
                     builder.show()
                 }
             }
-        }
-        // サービス起動
-        startService(Intent(this, BeaconService::class.java))
-
-        upReceiver = UpdateReceiver()
-        intentFilter = IntentFilter()
-        intentFilter!!.addAction("DO_ACTION")
-        registerReceiver(upReceiver, intentFilter)
-
-        val beacon1 = BeaconData("dummy1", "0")
-        val beacon2 = BeaconData("dummy2", "1")
-        val beacons = arrayOf(beacon1, beacon2)
-
-        // use a linear layout manager
-        recycler_view.layoutManager = LinearLayoutManager(this)
-
-        // set adapter
-        recycler_view.adapter =
-            CustomAdapter(beacons)
-
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
-        recycler_view.setHasFixedSize(true)
-    }
-
-    override fun onStop() {
-        super.onStop()
-    }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
-    //サービスをバインドすると実行されるイベント
-    override fun onServiceConnected(componentName: ComponentName?, service: IBinder?) {
-        //サービスからMessengerのインスタンスが返されるのでメンバ変数として保存しておく
-//        mServiceMessenger = Messenger(service)
-//        bound = true
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-//        mServiceMessenger = null
-//        bound = false
-    }
-
-    // パーミッションの許可チェック
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun checkPermission() {
-        // パーミッション未許可の時
-        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // パーミッションの許可ダイアログの表示
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 0)
         }
     }
 

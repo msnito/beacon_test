@@ -3,16 +3,19 @@ package com.example.beaconapp
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import com.example.beaconapp.activity.TAG
 import com.example.beaconapp.adapter.BeaconData
 import com.example.beaconapp.util.BeaconUtil
 
-// サービスから値を受け取ったら動かしたい内容を書く
+/**
+ * 受信時処理
+ */
 class UpdateReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context?, intent: Intent) {
+    override fun onReceive(context: Context, intent: Intent) {
         val extras = intent.getStringArrayListExtra("data")
 
         val beaconDistance = extras?.get(5).toString()
@@ -22,15 +25,20 @@ class UpdateReceiver : BroadcastReceiver() {
             beaconDistance
         )
 
+        val dataStore = context.getSharedPreferences("DataStore", Context.MODE_PRIVATE)
+
+        val vibrationFlag = dataStore.getString("vibration", "off")
         val vc = VibrationController(context)
 
-        // 特定の距離離れたら端末を振動させる
-        if (beaconDistance.toDouble() > BeaconUtil.DISTANCE_FOR_NOTICE) {
+//        val mToast = Toast.makeText(context, beaconDistance, Toast.LENGTH_LONG)
+
+        // 特定の距離近づいたら端末を振動させる
+        if ((beaconDistance.toDouble() < BeaconUtil.DISTANCE_FOR_NOTICE) && vibrationFlag === "on") {
             vc.start()
-            Log.d(TAG, "distance was over 5m.")
+//            mToast.show()
+            Log.d(TAG, "Distance to the Beacon is within 3m.")
         }
 
-        Toast.makeText(context, beaconDistance,  Toast.LENGTH_LONG).show()
         Log.d(TAG, extras?.get(0).toString())
         Log.d(TAG, beaconDistance)
     }
