@@ -3,6 +3,8 @@ package com.example.beaconapp.activity
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -14,6 +16,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.beaconapp.NotificationController
 import com.example.beaconapp.R
 import com.example.beaconapp.UpdateReceiver
 import com.example.beaconapp.adapter.BeaconData

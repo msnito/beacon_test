@@ -12,8 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="ToggleButton"
-        android:textOff="振動OFF"
-        android:textOn="振動ON"
+        android:textOff="警告OFF"
+        android:textOn="警告ON"
         tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="-41dp"
         tools:layout_editor_absoluteY="502dp" />
